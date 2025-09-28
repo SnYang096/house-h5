@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { getHouseDetail, HouseDetailResponse } from '@/services/house';
-import { Box, Button, Heading, Text, Image, Flex, Tag } from '@chakra-ui/react'
+import { Box, Button, Heading, Text, Image, Flex } from '@chakra-ui/react'
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules'; // Import Swiper styles
 import HouseRF from '@/assets/images/houserf.png'
@@ -14,12 +14,14 @@ import { replaceWhitespaceUnlessPhoneNumber } from '@/utils';
 import { useSearchParams } from 'react-router';
 import { downloadFile } from '@/utils/download';
 import MapHouse from '@/components/MapHouse';
+import toast from 'react-hot-toast';
 
 export default function House() {
 
   const [houseDetail, setHouseDetail] = useState<HouseDetailResponse | null>(null);
   const [searchParams] = useSearchParams();
   const showFullInfo = searchParams.get('showFullInfo');
+
 
   useEffect(() => {
 
@@ -98,6 +100,15 @@ export default function House() {
     // }, delay);
   };
 
+  const handleCopy = () => { 
+    if (!description) return;
+    navigator.clipboard.writeText(description).then(() => {
+      toast('复制成功');
+    }).catch(err => {
+      toast("复制失败!");
+    });
+  }
+
 
   return (
     <Box textAlign="center" bg="gray.50" minH="60vh">
@@ -141,7 +152,7 @@ export default function House() {
         )}
       </Swiper>
       <Button mt={1} onClick={handleDownloadAll}>一键下载图片</Button>
-      <Box
+      {/* <Box
         display="flex"
         flexDirection="column"
         p={5}
@@ -151,9 +162,7 @@ export default function House() {
         borderRadius="md"
         bg="white"
       >
-        {/* --- Address: 地址信息 --- */}
         <Flex alignItems="center" mt={3}>
-          {/* <Icon as={FiMapPin} w={4} h={4} color="gray.500" mr={2} /> */}
           <Text
             // color="#878a8f"
             fontSize="xl" // 24rpx
@@ -257,7 +266,7 @@ export default function House() {
             </Text>
           </Flex>
         </Flex>
-      </Box>
+      </Box> */}
       <Box
         display="flex"
         flexDirection="column"
@@ -268,7 +277,11 @@ export default function House() {
         borderRadius="md"
         bg="white"
       >
-        <Text fontSize="md" fontWeight="semibold" mb={2} textAlign="left">房屋描述: </Text>
+        <Flex alignItems="center" justify="space-between" mt={3} mb={5}>
+          <Text fontSize="md" fontWeight="semibold" textAlign="left">房屋描述: </Text>
+          <Button  border="" p={0} h="max-content" display="flex" alignItems="center" justifyContent="center" onClick={handleCopy}><Text  fontSize="sm" fontWeight="semibold" textAlign="left">复制</Text></Button>
+        </Flex>
+      
         <Text fontSize="sm" fontWeight="semibold" mb={2} textAlign="left">{description}</Text>
       </Box>
 
