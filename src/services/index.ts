@@ -1,0 +1,1 @@
+export const prefix = '/wei/api/v1';
