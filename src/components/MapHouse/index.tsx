@@ -1,19 +1,23 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MultiMarker, TMap } from 'tlbs-map-react';
 
 const MapApiKey = import.meta.env.VITE_MAP_API_KEY;
 
-// 3. 定义组件 Props
 interface MapHouseProps {
-  lat?: number;
-  lng?: number;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 const MapHouse = ({ lat, lng }: MapHouseProps) => {
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
-  
+  const mapContainerRef = useRef<HTMLDivElement>(null); // 用于全屏的容器
+
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isLandscape, setIsLandscape] = useState<boolean>(false);
+
   const styles = {
     multiMarkerStyle: {
       width: 20,
@@ -22,12 +26,76 @@ const MapHouse = ({ lat, lng }: MapHouseProps) => {
     },
   };
 
-  const geometries = useMemo(() => {
-    if (!lat || !lng) {
-      return [];
-    }
-    console.log("经纬度信息", { lat, lng });
+  // 检查是否处于全屏状态
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // 进入全屏
+  const enterFullscreen = async () => {
+    if (!mapContainerRef.current) return;
+
+    try {
+      // 可选：尝试锁定为横屏（移动端有效，需要用户手势触发）
+      if (isLandscape && screen.orientation && (screen.orientation as any).lock) {
+       await (screen.orientation as any).lock('landscape');// 或 'portrait'
+      }
+
+      await mapContainerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } catch (err) {
+      console.error('进入全屏失败:', err);
+    }
+  };
+
+  // 退出全屏
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+
+      // 恢复竖屏（可选）
+      if (screen.orientation && screen.orientation.unlock) {
+        await screen.orientation.unlock();
+      }
+
+      setIsFullscreen(false);
+    } catch (err) {
+      console.error('退出全屏失败:', err);
+    }
+  };
+
+  // 切换横屏模式（用户手动选择是否横屏，比如通过 checkbox 或按钮）
+  const toggleLandscape = () => {
+    setIsLandscape((prev) => !prev);
+  };
+
+  // 如果没有经纬度，显示提示
+  // if (lat == null || lng == null) {
+  //   return (
+  //     <div style={{ 
+  //       width: '100%', 
+  //       height: '200px', 
+  //       background: '#f0f0f0', 
+  //       display: 'flex', 
+  //       alignItems: 'center', 
+  //       justifyContent: 'center' 
+  //     }}>
+  //       📍 请传入有效的经纬度
+  //     </div>
+  //   );
+  // }
+
+   const geometries = useMemo(() => {
     return [
       {
         styleId: 'multiMarkerStyle',
@@ -36,31 +104,86 @@ const MapHouse = ({ lat, lng }: MapHouseProps) => {
     ];
   }, [lat, lng]);
 
-  if (!lat || !lng) {
-    return (
-      <div style={{ width: '100%', height: '200px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        📍 请传入有效的经纬度
-      </div>
-    );
-  }
-
   return (
     <div>
-      <TMap
-        ref={mapRef}
-        apiKey={MapApiKey}
-        center={{ lat, lng }}
-        options={{
-          zoom: 15,
-          center: { lat, lng },
+      {/* 控制栏：全屏 / 横屏 切换按钮（非全屏状态下显示） */}
+      {!isFullscreen && (
+        <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
+          <button
+            onClick={enterFullscreen}
+            style={{
+              padding: '6px 12px',
+              cursor: 'pointer',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+            }}
+          >
+            🖥️ 进入全屏
+          </button>
+
+          {/* <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={isLandscape}
+              onChange={toggleLandscape}
+            />
+            🔄 进入横屏模式
+          </label> */}
+        </div>
+      )}
+
+      {/* 地图容器 —— 用于全屏 */}
+      <div
+        ref={mapContainerRef}
+        style={{
+          width: '100%',
+          height: isFullscreen ? '100vh' : '400px', // 全屏时占满视口高度
+          position: 'relative',
         }}
       >
-        <MultiMarker
-          ref={markerRef}
-          styles={styles}
-          geometries={geometries}
-        />
-      </TMap>
+        <TMap
+          ref={mapRef}
+          apiKey={MapApiKey}
+          center={{ lat, lng }}
+          options={{
+            zoom: 15,
+          }}
+        >
+          <MultiMarker
+            ref={markerRef}
+            styles={styles}
+            geometries={geometries}
+          />
+        </TMap>
+
+        {/* 全屏状态下显示退出按钮 */}
+        {isFullscreen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              zIndex: 1000,
+            }}
+          >
+            <button
+              onClick={exitFullscreen}
+              style={{
+                padding: '8px 16px',
+                cursor: 'pointer',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+              }}
+            >
+              ❌ 退出全屏
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

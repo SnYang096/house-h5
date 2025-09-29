@@ -10,7 +10,7 @@ import 'swiper/css';
 import './index.scss'
 import { useEffect, useMemo, useState } from 'react';
 import { houseType, rentTypes } from '@/constants/house';
-import { replaceWhitespaceUnlessPhoneNumber } from '@/utils';
+import { downloadVideo, replaceWhitespaceUnlessPhoneNumber } from '@/utils';
 import { useSearchParams } from 'react-router';
 import { downloadFile } from '@/utils/download';
 import MapHouse from '@/components/MapHouse';
@@ -35,7 +35,7 @@ export default function House() {
   }, [searchParams])
 
   const formatDescription = (desc: string) => {
-    return desc.replace(/(看房电话|联系方式|联系电话)\s*[:：]?\s*\d{11}\s*|\b\d{11}\b/g, '').trim();
+    return desc.replace(/(看房电话|联系方式|联系电话)\s*[:：]?\s*\d{11}\s*|\b\d{11}\b/g, '').replace(/#小程序:\/\/[^\s]*/g, '').trim();
   }
 
   const room = useMemo(() => {
@@ -86,6 +86,10 @@ export default function House() {
   }
   const handleDownloadAll = () => {
     let delay = 0;
+    setTimeout(() => {
+      downloadVideo(videoUrl);
+      delay += 1000;
+    }, delay);
 
     // 下载图片
     imageUrls.forEach((url, index) => {
@@ -94,10 +98,7 @@ export default function House() {
       }, delay);
       delay += 1000; // 每张图片间隔 1 秒
     });
-
-    // setTimeout(() => {
-    //   downloadFile(videoUrl, `house-video.mp4`);
-    // }, delay);
+    
   };
 
   const handleCopy = () => { 
@@ -108,6 +109,25 @@ export default function House() {
       toast("复制失败!");
     });
   }
+
+  const phoneNumbers = useMemo(() => {
+    const phoneSet = new Set<string>();
+
+    if (room?.description) {
+      // 匹配连续 11 位数字
+      const matches = room.description.match(/[0-9]{11}/g);
+      if (matches) {
+        matches.forEach((num) => phoneSet.add(num));
+      }
+    }
+
+    const phones = Array.from(phoneSet);
+    if (phones.length > 1) { 
+      return phones; // 多个号码时排序返回
+    }
+
+    return []; // 转为数组返回
+  }, [room?.description]); 
 
 
   return (
@@ -283,6 +303,11 @@ export default function House() {
         </Flex>
       
         <Text fontSize="sm" fontWeight="semibold" mb={2} textAlign="left">{description}</Text>
+      </Box>
+      <Box display="flex">
+        {phoneNumbers.length > 0 && phoneNumbers.map(phone => {
+          return <Button key={phone} m={2} onClick={() => {window.location.href = `tel:${phone}`}}>拨打: {phone}</Button> 
+        })}
       </Box>
 
       {houseDetail?.lat && <Box
