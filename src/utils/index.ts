@@ -41,3 +41,28 @@ export async function downloadVideo(url: string) {
     console.error('下载失败:', error);
   }
 }
+
+export async function downloadFile(url: string, filename: string = 'file') {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`网络请求失败: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename; // 例如：'image.png'、'video.mp4'
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // 延迟释放 Blob URL，确保下载完成
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+  } catch (error) {
+    console.error('下载失败:', error);
+    // 可以在这里加用户提示，比如 Toast 或 Alert
+  }
+}

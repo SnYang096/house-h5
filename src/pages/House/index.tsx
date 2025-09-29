@@ -10,9 +10,8 @@ import 'swiper/css';
 import './index.scss'
 import { useEffect, useMemo, useState } from 'react';
 import { houseType, rentTypes } from '@/constants/house';
-import { downloadVideo, replaceWhitespaceUnlessPhoneNumber } from '@/utils';
+import { downloadVideo, replaceWhitespaceUnlessPhoneNumber, downloadFile } from '@/utils';
 import { useSearchParams } from 'react-router';
-import { downloadFile } from '@/utils/download';
 import MapHouse from '@/components/MapHouse';
 import toast from 'react-hot-toast';
 
@@ -86,10 +85,10 @@ export default function House() {
   }
   const handleDownloadAll = () => {
     let delay = 0;
-    setTimeout(() => {
-      downloadVideo(videoUrl);
-      delay += 1000;
-    }, delay);
+    // setTimeout(() => {
+    //   downloadVideo(videoUrl);
+    //   delay += 1000;
+    // }, delay);
 
     // 下载图片
     imageUrls.forEach((url, index) => {
@@ -171,7 +170,10 @@ export default function House() {
           </SwiperSlide>
         )}
       </Swiper>
-      <Button mt={1} onClick={handleDownloadAll}>一键下载图片</Button>
+      <Box display="flex" justifyContent="space-between" p={5} pt={3} pb={6} m={2} borderRadius="md" bg="white">
+        <Button mt={1} onClick={handleDownloadAll}>下载图片</Button>
+        <Button mt={1} onClick={() => { downloadVideo(videoUrl) }}>下载视频</Button>
+      </Box>
       {/* <Box
         display="flex"
         flexDirection="column"

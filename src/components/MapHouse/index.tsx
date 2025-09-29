@@ -42,6 +42,12 @@ const MapHouse = ({ lat, lng }: MapHouseProps) => {
   // 进入全屏
   const enterFullscreen = async () => {
     if (!mapContainerRef.current) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOS) { 
+      setIsFullscreen(true);
+      return;
+    }
 
     try {
       // 可选：尝试锁定为横屏（移动端有效，需要用户手势触发）
@@ -95,7 +101,12 @@ const MapHouse = ({ lat, lng }: MapHouseProps) => {
   //   );
   // }
 
-   const geometries = useMemo(() => {
+  const geometries = useMemo(() => {
+    if (!lat || !lng) {
+      return [];
+    }
+    console.log("经纬度信息", { lat, lng });
+
     return [
       {
         styleId: 'multiMarkerStyle',
@@ -138,17 +149,21 @@ const MapHouse = ({ lat, lng }: MapHouseProps) => {
       <div
         ref={mapContainerRef}
         style={{
-          width: '100%',
-          height: isFullscreen ? '100vh' : '400px', // 全屏时占满视口高度
-          position: 'relative',
+          width: isFullscreen ? '100vw' : '100%',
+          height: isFullscreen ? '100vh' : '400px', // 或其它默认高度
+          position: isFullscreen ? 'fixed' : 'relative',
+          top: isFullscreen ? 0 : undefined,
+          left: isFullscreen ? 0 : undefined,
+          zIndex: isFullscreen ? 9999 : undefined,
+          backgroundColor: isFullscreen ? '#fff' : undefined,
         }}
       >
         <TMap
           ref={mapRef}
           apiKey={MapApiKey}
-          center={{ lat, lng }}
           options={{
             zoom: 15,
+            center: { lat, lng },
           }}
         >
           <MultiMarker
