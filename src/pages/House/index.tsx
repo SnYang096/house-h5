@@ -306,8 +306,8 @@ export default function House() {
       
         <Text fontSize="sm" fontWeight="semibold" mb={2} textAlign="left">{description}</Text>
       </Box>
-      <Box display="flex">
-        {phoneNumbers.length > 0 && phoneNumbers.map(phone => {
+      <Box display="grid">
+        {phoneNumbers.length > 0 && showFullInfo && phoneNumbers.map(phone => {
           return <Button key={phone} m={2} onClick={() => {window.location.href = `tel:${phone}`}}>拨打: {phone}</Button> 
         })}
       </Box>

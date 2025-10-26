@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import './index.scss';
 import { getWeChatUrl } from '@/services/wechat';
@@ -13,8 +14,9 @@ const HomeIndex: React.FC = () => {
     (async () => {
       const id = searchParams.get('id');
       if (id) {
-        const res = await getUrl(id);
-        setHrefUrl(res?.data.result?.url)
+        const res = await getUrl(id) as any;
+        console.log("res== getUrl: ", res)
+        setHrefUrl((res)?.result?.url)
       }
     })()
   }, [searchParams])
@@ -22,6 +24,7 @@ const HomeIndex: React.FC = () => {
   const getUrl = async (param: string) => {
     try {
       const res = await getWeChatUrl(param);
+      console.log("getWeChatUrl: ", res)
       return res;
     } catch (error) {
       console.log('error', error);
@@ -36,9 +39,9 @@ const HomeIndex: React.FC = () => {
         <div className="desc">海量房源,尽在妙房源</div>
       </div>
       <div className="home-button">
-      {hrefUrl && <a href={hrefUrl} target="_blank" rel="noopener noreferrer">
+     {hrefUrl &&  <button><a href={hrefUrl} target="_blank" rel="noopener noreferrer">
         点击跳转小程序签署合同
-      </a>}
+      </a></button>}
       </div>
     </div>
   );

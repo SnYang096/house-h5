@@ -1,6 +1,6 @@
  
 
-import http, { ApiResponse } from './http';
+import http from './http';
 
 export const getWeChatUrl = (id: string | number) => {
   return http.get(`/contractView/v2/wechatUrl/${id}`, {});
